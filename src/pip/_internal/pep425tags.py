@@ -17,7 +17,7 @@ from pip._vendor.packaging.tags import (
 from pip._internal.utils.typing import MYPY_CHECK_RUNNING
 
 if MYPY_CHECK_RUNNING:
-    from typing import List, Optional, Tuple
+    from typing import List, Optional, Tuple, Set
 
     from pip._vendor.packaging.tags import PythonVersion
 
@@ -106,17 +106,16 @@ def _get_custom_interpreter(implementation=None, version=None):
 
 def get_supported(
     version=None,  # type: Optional[str]
-    platform=None,  # type: Optional[str]
+    platforms=None,  # type: Optional[List[str]]
     impl=None,  # type: Optional[str]
     abi=None  # type: Optional[str]
 ):
     # type: (...) -> List[Tag]
-    """Return a list of supported tags for each version specified in
-    `versions`.
+    """Return a list of supported tags for the given constraints.
 
     :param version: a string version, of the form "33" or "32",
         or None. The version will be assumed to support our ABI.
-    :param platform: specify the exact platform you want valid
+    :param platforms: specify the exact platforms you want valid
         tags for, or None. If None, use the local system platform.
     :param impl: specify the exact implementation you want valid
         tags for, or None. If None, use the local interpreter impl.
@@ -135,9 +134,15 @@ def get_supported(
     if abi is not None:
         abis = [abi]
 
-    platforms = None  # type: Optional[List[str]]
-    if platform is not None:
-        platforms = _get_custom_platforms(platform)
+    all_platforms = None  # type: Optional[List[str]]
+    if platforms is not None:
+        all_platforms = []
+        unique_platforms = set()  # type: Set[str]
+        for platform in platforms:
+            for custom_platform in _get_custom_platforms(platform):
+                if custom_platform not in unique_platforms:
+                    unique_platforms.add(custom_platform)
+                    all_platforms.append(custom_platform)
 
     is_cpython = (impl or interpreter_name()) == "cp"
     if is_cpython:
@@ -145,7 +150,7 @@ def get_supported(
             cpython_tags(
                 python_version=python_version,
                 abis=abis,
-                platforms=platforms,
+                platforms=all_platforms,
             )
         )
     else:
@@ -153,14 +158,14 @@ def get_supported(
             generic_tags(
                 interpreter=interpreter,
                 abis=abis,
-                platforms=platforms,
+                platforms=all_platforms,
             )
         )
     supported.extend(
         compatible_tags(
             python_version=python_version,
             interpreter=interpreter,
-            platforms=platforms,
+            platforms=all_platforms,
         )
     )
 

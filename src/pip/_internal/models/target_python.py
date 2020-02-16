@@ -19,18 +19,18 @@ class TargetPython(object):
 
     def __init__(
         self,
-        platform=None,  # type: Optional[str]
+        platforms=None,  # type: Optional[List[str]]
         py_version_info=None,  # type: Optional[Tuple[int, ...]]
         abi=None,  # type: Optional[str]
         implementation=None,  # type: Optional[str]
     ):
         # type: (...) -> None
         """
-        :param platform: A string or None. If None, searches for packages
-            that are supported by the current system. Otherwise, will find
-            packages that can be built on the platform passed in. These
-            packages will only be downloaded for distribution: they will
-            not be built locally.
+        :param platforms: A list of platform strings or None. If None,
+            searches for packages that are supported by the current system.
+            Otherwise, will find packages that can be built on the platforms
+            passed in. These packages will only be downloaded for
+            distribution: they will not be built locally.
         :param py_version_info: An optional tuple of ints representing the
             Python version information to use (e.g. `sys.version_info[:3]`).
             This can have length 1, 2, or 3 when provided.
@@ -51,7 +51,7 @@ class TargetPython(object):
 
         self.abi = abi
         self.implementation = implementation
-        self.platform = platform
+        self.platforms = platforms
         self.py_version = py_version
         self.py_version_info = py_version_info
 
@@ -70,7 +70,7 @@ class TargetPython(object):
             )
 
         key_values = [
-            ('platform', self.platform),
+            ('platforms', self.platforms),
             ('version_info', display_version),
             ('abi', self.abi),
             ('implementation', self.implementation),
@@ -98,7 +98,7 @@ class TargetPython(object):
 
             tags = get_supported(
                 version=version,
-                platform=self.platform,
+                platforms=self.platforms,
                 abi=self.abi,
                 impl=self.implementation,
             )
